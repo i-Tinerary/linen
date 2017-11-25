@@ -15,7 +15,7 @@ import Material.Options as Options
 import Material.Scheme
 import Material.Layout as Layout
 import Material.Table as Table
-import Material.Grid exposing (grid, cell, size, Device(..))
+import Material.Grid exposing (grid, cell, size, offset, Device(..))
 import Json.Decode as Decode
 
 
@@ -164,14 +164,23 @@ view model =
             { header = [ h1 [ style [ ( "padding", "2rem" ) ] ] [ text "I-tinerary" ] ]
             , drawer = []
             , tabs = ( [ text "Preferences", text "Plan" ], [] )
-            , main = [ pageLayout (mainBody model), footer ]
+            , main = [ pageLayout <| mainBody model, footer ]
             }
 
 
 pageLayout : Html Msg -> Html Msg
 pageLayout html =
-    grid []
-        [ cell [ size All 4 ]
+    grid
+        [ Options.css "display" "flex"
+        , Options.css "flex-direction" "row"
+        , Options.css "justify-content" "space-evenly"
+        , Options.css "align-items" "center"
+        ]
+        [ cell
+            [ size Tablet 8
+            , size Desktop 12
+            , size Phone 4
+            ]
             [ html ]
         ]
 
@@ -203,7 +212,9 @@ preferencesView preferences =
                 , Table.td [] (List.map interest entries)
                 ]
     in
-        Table.table []
+        Table.table
+            [ Options.css "align-self" "center"
+            ]
             [ Table.thead []
                 [ Table.th [] [ text "Category" ]
                 , Table.th [] [ text "Preferences" ]
@@ -243,7 +254,15 @@ itineraryView itinerary =
                 ]
     in
         grid []
-            [ cell [ size All 4 ]
+            [ cell
+                [ size Tablet 8
+                , size Desktop 12
+                , size Phone 4
+                , Options.css "display" "flex"
+                , Options.css "flex-direction" "column"
+                , Options.css "justify-content" "space-evenly"
+                , Options.css "align-items" "center"
+                ]
                 (List.map card itinerary)
             ]
 
