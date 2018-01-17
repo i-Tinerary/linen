@@ -63,25 +63,11 @@ type alias Model =
     { mdl :
         Material.Model
         -- Boilerplate: model store for any and all Mdl components you use.
+    , baseUrl : String
     , selectedTab : Tab
     , selectedUser : User
     , selectedPreferences : Preferences
     , selectedItinerary : Itinerary
-    }
-
-
-model : Model
-model =
-    { mdl =
-        Material.model
-        -- Boilerplate: Always use this initial Mdl model store.
-    , selectedTab = 0
-    , selectedUser = "test"
-    , selectedPreferences = [ Category "foo" [ "hehe" ], Category "bar" [ "bing", "bang", "bong" ] ]
-    , selectedItinerary =
-        [ { name = "foo", url = "", photoUrl = "", price = 0 }
-        , { name = "bar", url = "", photoUrl = "https://pbs.twimg.com/media/DPaWvjFUMAEoSgO.jpg:large", price = 0 }
-        ]
     }
 
 
@@ -106,7 +92,7 @@ update msg model =
             )
 
         GetUser user ->
-            ( model, getUser user )
+            ( model, getUser model.baseUrl user )
 
         NewUser (Ok user) ->
             ( { model | selectedUser = user }
@@ -126,12 +112,12 @@ update msg model =
             Material.update Mdl msg_ model
 
 
-getUser : User -> Cmd Msg
-getUser user =
+getUser : String -> User -> Cmd Msg
+getUser baseUrl user =
     let
         url : String
         url =
-            "/user/" ++ user
+            baseUrl ++ "/user/" ++ user
 
         request =
             Http.get url decodeUser
@@ -192,7 +178,7 @@ mainBody model =
             preferencesView model.selectedPreferences
 
         1 ->
-            itineraryView model.selectedItinerary
+            itineraryView model
 
         _ ->
             text "error"
@@ -223,9 +209,11 @@ preferencesView preferences =
             ]
 
 
-itineraryView : Itinerary -> Html Msg
-itineraryView itinerary =
+itineraryView : Model -> Html Msg
+itineraryView model =
     let
+        itinerary = model.selectedItinerary
+
         white =
             Color.text Color.white
 
@@ -239,7 +227,7 @@ itineraryView itinerary =
                     ]
                     []
                 , Card.title []
-                    [ Card.head [] [ text event.name ] ]
+                    [ Card.head [ white ] [ text event.name ] ]
                 , Card.menu []
                     [ Button.render Mdl
                         [ 0, 0 ]
@@ -289,10 +277,31 @@ footer =
         }
 
 
-main : Program Never Model Msg
+type alias Flags = {baseUrl: String, user: String}
+
+init : Flags -> (Model, Cmd Msg)
+init flags =
+    let
+       initModel =
+            { mdl =
+                Material.model
+                -- Boilerplate: Always use this initial Mdl model store.
+            , baseUrl = flags.baseUrl
+            , selectedTab = 0
+            , selectedUser = flags.user
+            , selectedPreferences = [ Category "foo" [ "hehe" ], Category "bar" [ "bing", "bang", "bong" ] ]
+            , selectedItinerary =
+                [ { name = "foo", url = "", photoUrl = "", price = 0 }
+                , { name = "bar", url = "", photoUrl = "https://pbs.twimg.com/media/DPaWvjFUMAEoSgO.jpg:large", price = 0 }
+                ]
+            }
+    in
+       (initModel, getUser flags.baseUrl flags.user)
+
+main : Program Flags Model Msg
 main =
-    Html.program
-        { init = ( model, Cmd.none )
+    Html.programWithFlags
+        { init = init
         , view = view
         , subscriptions = always Sub.none
         , update = update
